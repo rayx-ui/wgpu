@@ -1379,6 +1379,21 @@ impl crate::Adapter for super::Adapter {
                     wgt::CompositeAlphaMode::PreMultiplied,
                 ],
             },
+            // Composition swap chains only support stretching.
+            scaling_modes: match surface.target {
+                SurfaceTarget::WndHandle(_) => vec![
+                    wgt::SurfaceScalingMode::Auto,
+                    wgt::SurfaceScalingMode::Stretch,
+                    wgt::SurfaceScalingMode::OneToOne,
+                ],
+                SurfaceTarget::Visual(_)
+                | SurfaceTarget::VisualFromWndHandle { .. }
+                | SurfaceTarget::SurfaceHandle(_)
+                | SurfaceTarget::SwapChainPanel(_) => vec![
+                    wgt::SurfaceScalingMode::Auto,
+                    wgt::SurfaceScalingMode::Stretch,
+                ],
+            },
         })
     }
 

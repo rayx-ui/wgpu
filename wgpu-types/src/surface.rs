@@ -139,6 +139,36 @@ pub enum CompositeAlphaMode {
     Inherit = 4,
 }
 
+/// How the presentation engine fits a surface texture to its window or view when
+/// their sizes differ, as they do while a window is resized until the surface is
+/// configured with the new size.
+///
+/// The modes a surface supports are listed in
+/// [`SurfaceCapabilities::scaling_modes`]; every surface supports
+/// [`Auto`](Self::Auto).
+#[repr(C)]
+#[derive(Copy, Clone, Debug, ConstDefault!, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum SurfaceScalingMode {
+    /// Chooses [`Stretch`](Self::Stretch) if the surface supports it.
+    /// Otherwise the platform's behavior applies, which differs between
+    /// backends, window systems and drivers (macOS, for example, stretches).
+    #[custom(default)]
+    Auto = 0,
+    /// The surface texture is stretched to fill the window.
+    ///
+    /// * **Supported on**: DX12.
+    Stretch = 1,
+    /// The surface texture is presented unscaled, aligned to the top-left
+    /// corner of the window (the top-right corner for right-to-left windows).
+    /// Parts of the window the texture does not cover show the window's
+    /// background color, so a window that grows does not show a stretched
+    /// copy of its previous frame.
+    ///
+    /// * **Supported on**: DX12, for surfaces created from a window handle.
+    OneToOne = 2,
+}
+
 /// The color space in which the presentation engine interprets the values
 /// written to a surface texture.
 ///
@@ -529,6 +559,10 @@ pub struct SurfaceCapabilities {
     ///
     /// Will return at least one element, [`CompositeAlphaMode::Opaque`] or [`CompositeAlphaMode::Inherit`].
     pub alpha_modes: Vec<CompositeAlphaMode>,
+    /// List of supported scaling modes to use with the given adapter.
+    ///
+    /// Always contains [`SurfaceScalingMode::Auto`].
+    pub scaling_modes: Vec<SurfaceScalingMode>,
     /// Bitflag of supported texture usages for the surface to use with the given adapter.
     ///
     /// The usage [`TextureUsages::RENDER_ATTACHMENT`] is guaranteed.
@@ -558,6 +592,7 @@ impl Default for SurfaceCapabilities {
             format_capabilities: Vec::new(),
             present_modes: Vec::new(),
             alpha_modes: vec![CompositeAlphaMode::Opaque],
+            scaling_modes: vec![SurfaceScalingMode::Auto],
             usages: TextureUsages::RENDER_ATTACHMENT,
         }
     }
@@ -920,6 +955,8 @@ pub struct SurfaceConfiguration<V> {
     /// set once, and the window is later resized), the behaviour is defined
     /// but platform-specific, and may change in the future (currently macOS
     /// scales the surface, other platforms may do something else).
+    /// [`scaling_mode`](Self::scaling_mode) selects the behavior on surfaces
+    /// that support a choice.
     pub width: u32,
     /// Height of the swap chain. Must be the same size as the surface, and nonzero.
     ///
@@ -927,6 +964,8 @@ pub struct SurfaceConfiguration<V> {
     /// set once, and the window is later resized), the behaviour is defined
     /// but platform-specific, and may change in the future (currently macOS
     /// scales the surface, other platforms may do something else).
+    /// [`scaling_mode`](Self::scaling_mode) selects the behavior on surfaces
+    /// that support a choice.
     pub height: u32,
     /// Presentation mode of the swap chain. Fifo is the only mode guaranteed to be supported.
     /// `FifoRelaxed`, `Immediate`, and `Mailbox` will crash if unsupported, while `AutoVsync` and
@@ -970,6 +1009,9 @@ pub struct SurfaceConfiguration<V> {
     pub desired_maximum_frame_latency: u32,
     /// Specifies how the alpha channel of the textures should be handled during compositing.
     pub alpha_mode: CompositeAlphaMode,
+    /// Specifies how the surface texture is fit into the window when their sizes differ. Must
+    /// be one of [`SurfaceCapabilities::scaling_modes`]; [`SurfaceScalingMode::Auto`] always is.
+    pub scaling_mode: SurfaceScalingMode,
     /// Specifies what view formats will be allowed when calling `Texture::create_view` on the texture returned by `Surface::get_current_texture`.
     ///
     /// View formats of the same format as the texture are always allowed.
@@ -993,6 +1035,7 @@ impl<V: Clone> SurfaceConfiguration<V> {
             present_mode: self.present_mode,
             desired_maximum_frame_latency: self.desired_maximum_frame_latency,
             alpha_mode: self.alpha_mode,
+            scaling_mode: self.scaling_mode,
             view_formats: fun(&self.view_formats),
         }
     }

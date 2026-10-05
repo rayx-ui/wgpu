@@ -502,6 +502,7 @@ struct SwapChain {
     waitable: Option<Foundation::HANDLE>,
     acquired_count: usize,
     present_mode: wgt::PresentMode,
+    scaling_mode: wgt::SurfaceScalingMode,
     format: wgt::TextureFormat,
     size: wgt::Extent3d,
 }
@@ -1404,7 +1405,7 @@ impl crate::Surface for Surface {
 
         let swap_chain = match self.swap_chain.write().take() {
             //Note: this path doesn't properly re-initialize all of the things
-            Some(sc) => {
+            Some(sc) if sc.scaling_mode == config.scaling_mode => {
                 let raw = unsafe { sc.release_resources() };
                 let result = unsafe {
                     raw.ResizeBuffers(
@@ -1421,7 +1422,12 @@ impl crate::Surface for Surface {
                 }
                 raw
             }
-            None => {
+            previous => {
+                // `ResizeBuffers` cannot change the scaling mode, and a window
+                // only accepts a new swap chain once the old one is released.
+                if let Some(sc) = previous {
+                    drop(unsafe { sc.release_resources() });
+                }
                 let desc = Dxgi::DXGI_SWAP_CHAIN_DESC1 {
                     AlphaMode: auxil::dxgi::conv::map_acomposite_alpha_mode(
                         config.composite_alpha_mode,
@@ -1436,7 +1442,12 @@ impl crate::Surface for Surface {
                     },
                     BufferUsage: Dxgi::DXGI_USAGE_RENDER_TARGET_OUTPUT,
                     BufferCount: swap_chain_buffer,
-                    Scaling: Dxgi::DXGI_SCALING_STRETCH,
+                    Scaling: match config.scaling_mode {
+                        wgt::SurfaceScalingMode::OneToOne => Dxgi::DXGI_SCALING_NONE,
+                        wgt::SurfaceScalingMode::Auto | wgt::SurfaceScalingMode::Stretch => {
+                            Dxgi::DXGI_SCALING_STRETCH
+                        }
+                    },
                     SwapEffect: Dxgi::DXGI_SWAP_EFFECT_FLIP_DISCARD,
                     Flags: flags.0 as u32,
                 };
@@ -1602,6 +1613,7 @@ impl crate::Surface for Surface {
             waitable,
             acquired_count: 0,
             present_mode: config.present_mode,
+            scaling_mode: config.scaling_mode,
             format: config.format,
             size: config.extent,
         });

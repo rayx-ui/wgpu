@@ -4415,6 +4415,8 @@ impl dispatch::SurfaceInterface for WebSurface {
                 wgt::CompositeAlphaMode::Opaque,
                 wgt::CompositeAlphaMode::PreMultiplied,
             ],
+            // The page's CSS, not the canvas configuration, decides how the canvas is scaled.
+            scaling_modes: vec![wgt::SurfaceScalingMode::Auto],
             // Statically set to RENDER_ATTACHMENT for now. See https://gpuweb.github.io/gpuweb/#dom-gpucanvasconfiguration-usage
             usages: wgt::TextureUsages::RENDER_ATTACHMENT,
         }

@@ -2251,6 +2251,11 @@ pub struct SurfaceCapabilities {
     ///
     /// Must be at least one.
     pub composite_alpha_modes: Vec<wgt::CompositeAlphaMode>,
+
+    /// List of supported scaling modes.
+    ///
+    /// Must contain [`wgt::SurfaceScalingMode::Auto`].
+    pub scaling_modes: Vec<wgt::SurfaceScalingMode>,
 }
 
 impl SurfaceCapabilities {
@@ -2800,6 +2805,9 @@ pub struct SurfaceConfiguration {
     pub present_mode: wgt::PresentMode,
     /// Alpha composition mode.
     pub composite_alpha_mode: wgt::CompositeAlphaMode,
+    /// Scaling mode. One of `SurfaceCapabilities::scaling_modes`; `wgpu-core` resolves
+    /// [`wgt::SurfaceScalingMode::Auto`] to `Stretch` when the surface supports it.
+    pub scaling_mode: wgt::SurfaceScalingMode,
     /// Format of the surface textures.
     pub format: wgt::TextureFormat,
     /// Color space in which the presentation engine interprets the surface

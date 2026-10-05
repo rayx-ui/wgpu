@@ -1384,6 +1384,7 @@ impl crate::Adapter for super::Adapter {
                     vec![wgt::PresentMode::Fifo] //TODO
                 },
                 composite_alpha_modes: vec![wgt::CompositeAlphaMode::Opaque], //TODO
+                scaling_modes: vec![wgt::SurfaceScalingMode::Auto],
                 maximum_frame_latency: 2..=2, //TODO, unused currently
                 current_extent: None,
                 usage: wgt::TextureUses::COLOR_TARGET,

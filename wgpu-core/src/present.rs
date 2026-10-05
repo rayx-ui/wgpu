@@ -113,6 +113,11 @@ pub enum ConfigureSurfaceError {
         requested: wgt::CompositeAlphaMode,
         available: Vec<wgt::CompositeAlphaMode>,
     },
+    #[error("Requested scaling mode {requested:?} is not in the list of supported scaling modes: {available:?}")]
+    UnsupportedScalingMode {
+        requested: wgt::SurfaceScalingMode,
+        available: Vec<wgt::SurfaceScalingMode>,
+    },
     #[error("Requested usage {requested:?} is not in the list of supported usages: {available:?}")]
     UnsupportedUsage {
         requested: wgt::TextureUses,
@@ -146,6 +151,7 @@ impl WebGpuError for ConfigureSurfaceError {
             | Self::UnsupportedColorSpace { .. }
             | Self::UnsupportedPresentMode { .. }
             | Self::UnsupportedAlphaMode { .. }
+            | Self::UnsupportedScalingMode { .. }
             | Self::UnsupportedUsage { .. } => ErrorType::Validation,
         }
     }

@@ -190,6 +190,7 @@ impl Surface for NativeSurface {
                 .flat_map(conv::map_vk_present_mode)
                 .collect(),
             composite_alpha_modes: conv::map_vk_composite_alpha(caps.supported_composite_alpha),
+            scaling_modes: vec![wgt::SurfaceScalingMode::Auto],
         })
     }
 

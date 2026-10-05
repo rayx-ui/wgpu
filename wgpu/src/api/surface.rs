@@ -96,6 +96,7 @@ impl Surface<'_> {
             desired_maximum_frame_latency: 2,
             present_mode: *caps.present_modes.first()?,
             alpha_mode: wgt::CompositeAlphaMode::Auto,
+            scaling_mode: wgt::SurfaceScalingMode::Auto,
             view_formats: vec![],
         })
     }
